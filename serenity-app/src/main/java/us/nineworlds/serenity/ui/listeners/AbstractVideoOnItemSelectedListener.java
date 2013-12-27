@@ -33,7 +33,9 @@ import us.nineworlds.serenity.R;
 import us.nineworlds.serenity.SerenityApplication;
 import us.nineworlds.serenity.core.model.VideoContentInfo;
 import us.nineworlds.serenity.core.model.impl.Subtitle;
+import us.nineworlds.serenity.core.model.impl.YouTubeVideoContentInfo;
 import us.nineworlds.serenity.core.services.MovieMetaDataRetrievalIntentService;
+import us.nineworlds.serenity.core.services.YouTubeTrailerSearchIntentService;
 import us.nineworlds.serenity.ui.util.ImageInfographicUtils;
 import us.nineworlds.serenity.ui.util.ImageUtils;
 import us.nineworlds.serenity.widgets.SerenityAdapterView;
@@ -78,6 +80,7 @@ public abstract class AbstractVideoOnItemSelectedListener implements
 	public static final float WATCHED_PERCENT = 0.98f;
 	public static Activity context;
 	public Handler subtitleHandler;
+	public Handler trailerHandler;
 	private Animation shrink;
 	private Animation fadeIn;
 	private View previous;
@@ -185,6 +188,15 @@ public abstract class AbstractVideoOnItemSelectedListener implements
 		intent.putExtra("key", mpi.id());
 		context.startService(intent);
 	}
+	
+	public void fetchTrailer(VideoContentInfo mpi) {
+		trailerHandler = new TrailerHandler(mpi);
+		Messenger messenger = new Messenger(trailerHandler);
+		Intent intent = new Intent(context, YouTubeTrailerSearchIntentService.class);
+		intent.putExtra("videoTitle", mpi.getTitle());
+		intent.putExtra("year", mpi.getYear());
+		context.startService(intent);
+	}
 
 	@Override
 	public void onItemSelected(SerenityAdapterView<?> av, View v, int position,
@@ -232,6 +244,31 @@ public abstract class AbstractVideoOnItemSelectedListener implements
 
 	}
 
+	public static class TrailerHandler extends Handler {
+		
+		private VideoContentInfo video;
+		
+		public TrailerHandler(VideoContentInfo mpi) {
+			video = mpi;
+		}
+		
+		@Override
+		public void handleMessage(Message msg) {
+			YouTubeVideoContentInfo yt = (YouTubeVideoContentInfo) msg.obj;
+			if (yt.id() == null) {
+				return;
+			}
+			
+			LinearLayout infographicsView = (LinearLayout) context
+					.findViewById(R.id.movieInfoGraphicLayout);
+			ImageView ytImage = new ImageView(context);
+			ytImage.setImageResource(R.drawable.yt_social_icon_red_128px);
+			infographicsView.addView(ytImage);
+			video.setTrailer(true);
+			video.setTrailerId(yt.id());
+		}
+	}
+	
 	public static class SubtitleHandler extends Handler {
 
 		private VideoContentInfo video;
