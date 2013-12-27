@@ -107,7 +107,6 @@ public class YouTubeTrailerSearchIntentService extends IntentService {
 				VideoEntry entry = videoFeed.getEntries().get(0);
 				videoInfo = new YouTubeVideoContentInfo();
 				videoInfo.setId(entry.getId());
-				videoInfo.setSummary(entry.getSummary().getPlainText());
 			}
 						 
 		} catch (MalformedURLException e) {

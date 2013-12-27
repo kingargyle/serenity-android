@@ -110,6 +110,7 @@ public abstract class AbstractVideoOnItemSelectedListener implements
 	 * @param position
 	 */
 	protected void createInfographicDetails(ImageView v) {
+		fetchTrailer(videoInfo);
 		LinearLayout infographicsView = (LinearLayout) context
 				.findViewById(R.id.movieInfoGraphicLayout);
 		infographicsView.removeAllViews();
@@ -195,6 +196,7 @@ public abstract class AbstractVideoOnItemSelectedListener implements
 		Intent intent = new Intent(context, YouTubeTrailerSearchIntentService.class);
 		intent.putExtra("videoTitle", mpi.getTitle());
 		intent.putExtra("year", mpi.getYear());
+		intent.putExtra("MESSENGER", messenger);
 		context.startService(intent);
 	}
 
