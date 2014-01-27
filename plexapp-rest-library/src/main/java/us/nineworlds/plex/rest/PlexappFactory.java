@@ -279,7 +279,7 @@ public class PlexappFactory {
 	}
 	
 	public MediaContainer serializeResourceFromString(String xmlString) throws Exception {
-		MediaContainer container = serializer.read(MediaContainer.class, xmlString);
+		MediaContainer container = serializer.read(MediaContainer.class, xmlString, false);
 		return container;
 	}
 	

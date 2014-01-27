@@ -25,13 +25,22 @@ package us.nineworlds.serenity.ui.browser.movie;
 
 import java.util.List;
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
 import com.google.android.youtube.player.YouTubeApiServiceUtil;
 import com.google.android.youtube.player.YouTubeInitializationResult;
 import com.jess.ui.TwoWayAbsListView;
 import com.jess.ui.TwoWayGridView;
 
+import us.nineworlds.plex.rest.PlexappFactory;
+import us.nineworlds.plex.rest.model.impl.MediaContainer;
 import us.nineworlds.serenity.core.model.DBMetaData;
 import us.nineworlds.serenity.core.model.VideoContentInfo;
+import us.nineworlds.serenity.core.model.impl.MovieMediaContainer;
 import us.nineworlds.serenity.core.services.MovieMetaDataRetrievalIntentService;
 import us.nineworlds.serenity.core.services.MoviesRetrievalIntentService;
 import us.nineworlds.serenity.core.services.YouTubeTrailerSearchIntentService;
@@ -56,6 +65,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.os.Messenger;
 import android.text.method.MovementMethod;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AnimationUtils;
@@ -77,6 +87,7 @@ public class MoviePosterImageAdapter extends AbstractPosterImageGalleryAdapter {
 	private Handler posterGalleryHandler;
 	private static SerenityMultiViewVideoActivity movieContext;
 	private DBMetaDataSource datasource;
+	private RequestQueue queue;
 	
 	public MoviePosterImageAdapter(Context c, String key, String category) {
 		super(c, key, category);
@@ -199,13 +210,60 @@ public class MoviePosterImageAdapter extends AbstractPosterImageGalleryAdapter {
 
 	@Override
 	protected void fetchDataFromService() {
-		posterGalleryHandler = new MoviePosterHandler();
-		Messenger messenger = new Messenger(posterGalleryHandler);
-		Intent intent = new Intent(context, MoviesRetrievalIntentService.class);
-		intent.putExtra("MESSENGER", messenger);
-		intent.putExtra("key", key);
-		intent.putExtra("category", category);
-		context.startService(intent);
+//		posterGalleryHandler = new MoviePosterHandler();
+//		Messenger messenger = new Messenger(posterGalleryHandler);
+//		Intent intent = new Intent(context, MoviesRetrievalIntentService.class);
+//		intent.putExtra("MESSENGER", messenger);
+//		intent.putExtra("key", key);
+//		intent.putExtra("category", category);
+//		context.startService(intent);
+		
+		queue = Volley.newRequestQueue(context);
+		final PlexappFactory factory = SerenityApplication.getPlexFactory();
+		String url = factory.getSectionsURL(key, category);
+		
+		StringRequest request = new StringRequest(Request.Method.GET, url,
+				new Response.Listener<String>() {
+
+					@Override
+					public void onResponse(String response) {
+						try {
+							MediaContainer mc;
+							mc = factory.serializeResourceFromString(response);
+							populatePosters(mc);
+						} catch (Exception e) {
+							Log.e(getClass().getName(), "Error populating posters.", e);
+						}
+						pd.dismiss();
+					}
+
+					/**
+					 * @param mc
+					 */
+					protected void populatePosters(MediaContainer mc) {
+						MovieMediaContainer movies = new MovieMediaContainer(mc);
+						posterList = movies.createVideos();
+						notifyAdapter.notifyDataSetChanged();						
+						if (!movieContext.isGridViewActive()) {
+							SerenityGallery posterGallery = (SerenityGallery) context
+									.findViewById(R.id.moviePosterGallery);
+							posterGallery.requestFocusFromTouch();
+						} else {
+							TwoWayGridView gridView = (TwoWayGridView) context
+									.findViewById(R.id.movieGridView);
+							gridView.requestFocusFromTouch();
+						}
+					}
+				}, new Response.ErrorListener() {
+
+					@Override
+					public void onErrorResponse(VolleyError error) {
+						
+					}
+				});
+		
+		queue.add(request);
+		
 	}
 
 	private static class MoviePosterHandler extends Handler {
@@ -225,7 +283,6 @@ public class MoviePosterImageAdapter extends AbstractPosterImageGalleryAdapter {
 			}
 			pd.dismiss();
 		}
-
 	}
 	
 }
