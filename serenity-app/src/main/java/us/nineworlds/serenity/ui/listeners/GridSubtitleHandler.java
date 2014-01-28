@@ -27,6 +27,13 @@ public class GridSubtitleHandler extends Handler {
 	@Override
 	public void handleMessage(Message msg) {
 		List<Subtitle> subtitles = (List<Subtitle>) msg.obj;
+		processSubtitles(subtitles);
+	}
+
+	/**
+	 * @param subtitles
+	 */
+	public void processSubtitles(List<Subtitle> subtitles) {
 		View subtitleInd = view.findViewById(R.id.subtitleIndicator);
 		View infoGraphicInd = view.findViewById(R.id.infoGraphicMeta);
 		if (subtitles == null || subtitles.isEmpty()) {

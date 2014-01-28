@@ -256,6 +256,11 @@ public class PlexappFactory {
 	public String getSectionsURL(String key, String category) {
 		return resourcePath.getSectionsURL(key, category);
 	}
+	
+	public String getMovieMetadataURL(String key) {
+		return resourcePath.getMovieMetaDataURL(key);
+	}
+	
 
 	
 	/**
