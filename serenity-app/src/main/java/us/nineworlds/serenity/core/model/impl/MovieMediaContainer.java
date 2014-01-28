@@ -41,9 +41,8 @@ import us.nineworlds.serenity.core.model.VideoContentInfo;
  * @author dcarver
  * 
  */
-public class MovieMediaContainer {
+public class MovieMediaContainer extends AbstractMediaContainer {
 
-	MediaContainer mc;
 	List<VideoContentInfo> videoList;
 	PlexappFactory factory = SerenityApplication.getPlexFactory();
 
@@ -51,7 +50,7 @@ public class MovieMediaContainer {
 	 * 
 	 */
 	public MovieMediaContainer(MediaContainer mc) {
-		this.mc = mc;
+		super(mc);
 	}
 
 	public List<VideoContentInfo> createVideos() {

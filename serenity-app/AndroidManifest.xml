@@ -125,7 +125,6 @@
         </activity>
 
         <service android:name=".core.services.MainMenuIntentService" />
-        <service android:name=".core.services.MoviesRetrievalIntentService" />
         <service android:name=".core.services.MusicRetrievalIntentService" />
         <service android:name=".core.services.MusicAlbumRetrievalIntentService" />
         <service android:name=".core.services.MusicTrackRetrievalIntentService" />

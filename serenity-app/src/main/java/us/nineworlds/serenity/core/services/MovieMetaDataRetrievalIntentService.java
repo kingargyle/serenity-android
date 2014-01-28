@@ -23,7 +23,6 @@
 
 package us.nineworlds.serenity.core.services;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import android.content.Intent;
@@ -33,8 +32,8 @@ import android.os.Messenger;
 import android.os.RemoteException;
 import android.util.Log;
 import us.nineworlds.plex.rest.model.impl.MediaContainer;
-import us.nineworlds.plex.rest.model.impl.Stream;
 import us.nineworlds.serenity.core.model.impl.Subtitle;
+import us.nineworlds.serenity.core.model.impl.SubtitleMediaContainer;
 
 /**
  * @author dcarver
@@ -43,7 +42,7 @@ import us.nineworlds.serenity.core.model.impl.Subtitle;
 public class MovieMetaDataRetrievalIntentService extends AbstractPlexRESTIntentService {
 
 	private String key;
-	private ArrayList<Subtitle> subtitles;
+	private List<Subtitle> subtitles;
 	private static final String MOVIES_RETRIEVAL_INTENT_SERVICE = "VideoMetaDataRetrievalIntentService";
 
 
@@ -86,24 +85,6 @@ public class MovieMetaDataRetrievalIntentService extends AbstractPlexRESTIntentS
 	}
 	
 	protected void findSubtitle(MediaContainer mc) {
-		List<Stream> streams = mc.getVideos().get(0).getMedias().get(0).getVideoPart().get(0).getStreams();
-		subtitles = new ArrayList<Subtitle>();
-		for (Stream stream : streams) {
-			if ("srt".equals(stream.getFormat()) ||
-				"ass".equals(stream.getFormat())) {
-				
-				Subtitle subtitle = new Subtitle();
-				subtitle = new Subtitle();
-				subtitle.setFormat(stream.getFormat());
-				subtitle.setLanguageCode(stream.getLanguageCode());
-				subtitle.setKey(factory.baseURL() + stream.getKey().replaceFirst("/", ""));
-				if (stream.getLanguage() == null) {
-					subtitle.setDescription("Unknown (" + stream.getFormat() + ")");
-				} else {
-					subtitle.setDescription(stream.getLanguage() + " (" + stream.getFormat() + ")");
-				}
-				subtitles.add(subtitle);
-			}
-		}
+		subtitles = new SubtitleMediaContainer(mc).createSubtitle();
 	}
 }
