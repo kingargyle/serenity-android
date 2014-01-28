@@ -55,7 +55,7 @@ public class MovieMediaContainer {
 	}
 
 	public List<VideoContentInfo> createVideos() {
-		videoList = new ArrayList<VideoContentInfo>();
+		videoList = new ArrayList<VideoContentInfo>(mc.getSize());
 		createVideoContent(mc);
 		return videoList;
 	}

@@ -38,6 +38,7 @@ import com.jess.ui.TwoWayGridView;
 
 import us.nineworlds.plex.rest.PlexappFactory;
 import us.nineworlds.plex.rest.model.impl.MediaContainer;
+import us.nineworlds.serenity.core.OkHttpStack;
 import us.nineworlds.serenity.core.model.DBMetaData;
 import us.nineworlds.serenity.core.model.VideoContentInfo;
 import us.nineworlds.serenity.core.model.impl.MovieMediaContainer;
@@ -218,7 +219,7 @@ public class MoviePosterImageAdapter extends AbstractPosterImageGalleryAdapter {
 //		intent.putExtra("category", category);
 //		context.startService(intent);
 		
-		queue = Volley.newRequestQueue(context);
+		queue = Volley.newRequestQueue(context, new OkHttpStack());
 		final PlexappFactory factory = SerenityApplication.getPlexFactory();
 		String url = factory.getSectionsURL(key, category);
 		
