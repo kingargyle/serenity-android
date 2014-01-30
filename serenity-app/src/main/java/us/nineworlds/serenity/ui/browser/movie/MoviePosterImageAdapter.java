@@ -41,7 +41,6 @@ import us.nineworlds.serenity.core.OkHttpStack;
 import us.nineworlds.serenity.core.model.DBMetaData;
 import us.nineworlds.serenity.core.model.VideoContentInfo;
 import us.nineworlds.serenity.core.model.impl.MovieMediaContainer;
-import us.nineworlds.serenity.core.model.impl.SubtitleMediaContainer;
 import us.nineworlds.serenity.core.services.MovieMetaDataRetrievalIntentService;
 import us.nineworlds.serenity.core.services.YouTubeTrailerSearchIntentService;
 import us.nineworlds.serenity.core.util.DBMetaDataSource;
@@ -187,34 +186,14 @@ public class MoviePosterImageAdapter extends AbstractPosterImageGalleryAdapter {
 	}
 	
 	public void fetchSubtitle(VideoContentInfo mpi, View view) {
-		final GridSubtitleHandler subtitleHandler = new GridSubtitleHandler(mpi, view);
-
-		String url = factory.getMovieMetadataURL("/library/metadata/" + key);
-		
-		StringRequest request = new StringRequest(Request.Method.GET, url,
-				new Response.Listener<String>() {
-
-					@Override
-					public void onResponse(String response) {
-						try {
-							MediaContainer mc;
-							mc = factory.serializeResourceFromString(response);
-							SubtitleMediaContainer submc = new SubtitleMediaContainer(mc);
-							subtitleHandler.processSubtitles(submc.createSubtitle());
-						} catch (Exception e) {
-							Log.e(getClass().getName(), "Error populating posters.", e);
-						}
-					}
-				}, new Response.ErrorListener() {
-
-					@Override
-					public void onErrorResponse(VolleyError error) {
-						Log.e(getClass().getName(), "Subtitle processing error", error);
-					}
-				});
-		
-		queue.add(request);	
-		
+		GridSubtitleHandler subtitleHandler = new GridSubtitleHandler(mpi, view);
+		Messenger messenger = new Messenger(subtitleHandler);
+		Intent intent = new Intent(context,
+				MovieMetaDataRetrievalIntentService.class);
+		intent.putExtra("MESSENGER", messenger);
+		intent.putExtra("key", mpi.id());
+		context.startService(intent);
+				
 	}
 	
 
