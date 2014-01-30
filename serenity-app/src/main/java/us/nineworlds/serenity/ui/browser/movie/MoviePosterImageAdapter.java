@@ -80,8 +80,6 @@ public class MoviePosterImageAdapter extends AbstractPosterImageGalleryAdapter {
 	public MoviePosterImageAdapter(Context c, String key, String category) {
 		super(c, key, category);
 		movieContext = (SerenityMultiViewVideoActivity) c;
-		pd = ProgressDialog
-				.show(c, "", c.getString(R.string.retrieving_movies));
 		notifyAdapter = this;
 	}
 
@@ -198,8 +196,11 @@ public class MoviePosterImageAdapter extends AbstractPosterImageGalleryAdapter {
 	
 
 	@Override
-	protected void fetchDataFromService() {		
+	protected void fetchDataFromService() {
+		pd = ProgressDialog
+				.show(context, "", context.getString(R.string.retrieving_movies));
 		queue = Volley.newRequestQueue(context, new OkHttpStack());
+		
 		final PlexappFactory factory = SerenityApplication.getPlexFactory();
 		String url = factory.getSectionsURL(key, category);
 		
@@ -239,10 +240,12 @@ public class MoviePosterImageAdapter extends AbstractPosterImageGalleryAdapter {
 
 					@Override
 					public void onErrorResponse(VolleyError error) {
-						
+						if (pd != null) {
+							pd.dismiss();
+						}
 					}
 				});
-		
+
 		queue.add(request);	
 	}	
 }

@@ -24,6 +24,7 @@
 package us.nineworlds.serenity.core.model.impl;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 import us.nineworlds.plex.rest.PlexappFactory;
@@ -54,7 +55,7 @@ public class MovieMediaContainer extends AbstractMediaContainer {
 	}
 
 	public List<VideoContentInfo> createVideos() {
-		videoList = new ArrayList<VideoContentInfo>(mc.getSize());
+		videoList = new LinkedList<VideoContentInfo>();
 		createVideoContent(mc);
 		return videoList;
 	}
@@ -63,6 +64,11 @@ public class MovieMediaContainer extends AbstractMediaContainer {
 		String baseUrl = factory.baseURL();
 		List<Video> videos = mc.getVideos();
 		String mediaTagId = Long.valueOf(mc.getMediaTagVersion()).toString();
+		StringBuilder sbuild = new StringBuilder();
+		sbuild.append(baseUrl);
+		sbuild.append(":/resources/movie-fanart.jpg");
+		String baseImageResource = sbuild.toString();
+		
 		for (Video movie : videos) {
 			VideoContentInfo mpi = new MoviePosterInfo();
 			mpi.setMediaTagIdentifier(mediaTagId);
@@ -76,17 +82,21 @@ public class MovieMediaContainer extends AbstractMediaContainer {
 			mpi.setViewCount(movie.getViewCount());
 			mpi.setRating(movie.getRating());
 
-			String burl = baseUrl + ":/resources/movie-fanart.jpg";
+			String burl = baseImageResource;
 			if (movie.getBackgroundImageKey() != null) {
-				burl = baseUrl
-						+ movie.getBackgroundImageKey().replaceFirst("/", "");
+				StringBuilder builder = new StringBuilder();
+				builder.append(baseUrl);
+				builder.append(movie.getBackgroundImageKey().replaceFirst("/", ""));
+				burl = builder.toString();
 			}
 			mpi.setBackgroundURL(burl);
 
 			String turl = "";
 			if (movie.getThumbNailImageKey() != null) {
-				turl = baseUrl
-						+ movie.getThumbNailImageKey().replaceFirst("/", "");
+				StringBuilder builder = new StringBuilder();
+				builder.append(baseUrl);
+				builder.append(movie.getThumbNailImageKey().replaceFirst("/", ""));
+				turl = builder.toString();
 			}
 
 			mpi.setImageURL(turl);
@@ -107,9 +117,11 @@ public class MovieMediaContainer extends AbstractMediaContainer {
 				mpi.setVideoResolution(media.getVideoResolution());
 				mpi.setAspectRatio(media.getAspectRatio());
 				mpi.setAudioChannels(media.getAudioChannels());
-
-				String directPlayUrl = factory.baseURL()
-						+ part.getKey().replaceFirst("/", "");
+				StringBuilder builder = new StringBuilder();
+				builder.append(factory.baseURL());
+				builder.append(part.getKey().replaceFirst("/", ""));
+				
+				String directPlayUrl = builder.toString();
 				mpi.setDirectPlayUrl(directPlayUrl);
 
 			}
