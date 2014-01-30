@@ -23,13 +23,9 @@
 
 package us.nineworlds.serenity.ui.browser.movie;
 
-
 import com.android.volley.Request;
-import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
-import com.android.volley.toolbox.StringRequest;
-import com.android.volley.toolbox.Volley;
 import com.google.android.youtube.player.YouTubeApiServiceUtil;
 import com.google.android.youtube.player.YouTubeInitializationResult;
 import com.jess.ui.TwoWayAbsListView;
@@ -37,11 +33,9 @@ import com.jess.ui.TwoWayGridView;
 
 import us.nineworlds.plex.rest.PlexappFactory;
 import us.nineworlds.plex.rest.model.impl.MediaContainer;
-import us.nineworlds.serenity.core.OkHttpStack;
 import us.nineworlds.serenity.core.model.DBMetaData;
 import us.nineworlds.serenity.core.model.VideoContentInfo;
 import us.nineworlds.serenity.core.model.impl.MovieMediaContainer;
-import us.nineworlds.serenity.core.services.MovieMetaDataRetrievalIntentService;
 import us.nineworlds.serenity.core.services.YouTubeTrailerSearchIntentService;
 import us.nineworlds.serenity.core.util.DBMetaDataSource;
 import us.nineworlds.serenity.core.util.SimpleXmlRequest;
@@ -76,8 +70,7 @@ public class MoviePosterImageAdapter extends AbstractPosterImageGalleryAdapter {
 	protected static ProgressDialog pd;
 	private static SerenityMultiViewVideoActivity movieContext;
 	private DBMetaDataSource datasource;
-	private RequestQueue queue;
-	
+
 	public MoviePosterImageAdapter(Context c, String key, String category) {
 		super(c, key, category);
 		movieContext = (SerenityMultiViewVideoActivity) c;
@@ -90,20 +83,23 @@ public class MoviePosterImageAdapter extends AbstractPosterImageGalleryAdapter {
 		View galleryCellView = null;
 		if (convertView != null) {
 			galleryCellView = convertView;
-			galleryCellView.findViewById(R.id.posterInprogressIndicator).setVisibility(View.INVISIBLE);
-			galleryCellView.findViewById(R.id.posterWatchedIndicator).setVisibility(View.INVISIBLE);
-			galleryCellView.findViewById(R.id.infoGraphicMeta).setVisibility(View.GONE);
+			galleryCellView.findViewById(R.id.posterInprogressIndicator)
+					.setVisibility(View.INVISIBLE);
+			galleryCellView.findViewById(R.id.posterWatchedIndicator)
+					.setVisibility(View.INVISIBLE);
+			galleryCellView.findViewById(R.id.infoGraphicMeta).setVisibility(
+					View.GONE);
 		} else {
-	       galleryCellView = context.getLayoutInflater().inflate(
-				R.layout.poster_indicator_view, null);
+			galleryCellView = context.getLayoutInflater().inflate(
+					R.layout.poster_indicator_view, null);
 		}
 
 		VideoContentInfo pi = posterList.get(position);
 		gridViewMetaData(galleryCellView, pi);
-		
+
 		ImageView mpiv = (ImageView) galleryCellView
 				.findViewById(R.id.posterImageView);
-		
+
 		mpiv.setBackgroundResource(R.drawable.gallery_item_background);
 		mpiv.setScaleType(ImageView.ScaleType.FIT_XY);
 		int width = 0;
@@ -138,21 +134,25 @@ public class MoviePosterImageAdapter extends AbstractPosterImageGalleryAdapter {
 	protected void gridViewMetaData(View galleryCellView, VideoContentInfo pi) {
 		if (movieContext.isGridViewActive()) {
 			checkDataBaseForTrailer(pi);
-			
+
 			if (pi.hasTrailer() == false) {
-				if (YouTubeInitializationResult.SUCCESS.equals(YouTubeApiServiceUtil.isYouTubeApiServiceAvailable(context))) {
+				if (YouTubeInitializationResult.SUCCESS
+						.equals(YouTubeApiServiceUtil
+								.isYouTubeApiServiceAvailable(context))) {
 					fetchTrailer(pi, galleryCellView);
 				}
 			} else {
 				View v = galleryCellView.findViewById(R.id.infoGraphicMeta);
 				v.setVisibility(View.VISIBLE);
-				v.findViewById(R.id.trailerIndicator).setVisibility(View.VISIBLE);
+				v.findViewById(R.id.trailerIndicator).setVisibility(
+						View.VISIBLE);
 			}
-			
+
 			if (pi.getAvailableSubtitles() != null) {
 				View v = galleryCellView.findViewById(R.id.infoGraphicMeta);
 				v.setVisibility(View.VISIBLE);
-				v.findViewById(R.id.subtitleIndicator).setVisibility(View.VISIBLE);
+				v.findViewById(R.id.subtitleIndicator).setVisibility(
+						View.VISIBLE);
 			} else {
 				fetchSubtitle(pi, galleryCellView);
 			}
@@ -172,80 +172,104 @@ public class MoviePosterImageAdapter extends AbstractPosterImageGalleryAdapter {
 		}
 		datasource.close();
 	}
-	
+
 	public void fetchTrailer(VideoContentInfo mpi, View view) {
-		
-		TrailerHandler trailerHandler = new TrailerGridHandler(mpi, context, view);
+
+		TrailerHandler trailerHandler = new TrailerGridHandler(mpi, context,
+				view);
 		Messenger messenger = new Messenger(trailerHandler);
-		Intent intent = new Intent(context, YouTubeTrailerSearchIntentService.class);
+		Intent intent = new Intent(context,
+				YouTubeTrailerSearchIntentService.class);
 		intent.putExtra("videoTitle", mpi.getTitle());
 		intent.putExtra("year", mpi.getYear());
 		intent.putExtra("MESSENGER", messenger);
 		context.startService(intent);
 	}
-	
+
 	public void fetchSubtitle(VideoContentInfo mpi, View view) {
-		GridSubtitleHandler subtitleHandler = new GridSubtitleHandler(mpi, view);
-		Messenger messenger = new Messenger(subtitleHandler);
-		Intent intent = new Intent(context,
-				MovieMetaDataRetrievalIntentService.class);
-		intent.putExtra("MESSENGER", messenger);
-		intent.putExtra("key", mpi.id());
-		context.startService(intent);
-				
-	}
-	
-
-	@Override
-	protected void fetchDataFromService() {
-		pd = ProgressDialog
-				.show(context, "", context.getString(R.string.retrieving_movies));
-		queue = Volley.newRequestQueue(context, new OkHttpStack());
-		
-		final PlexappFactory factory = SerenityApplication.getPlexFactory();
-		String url = factory.getSectionsURL(key, category);
-		
-		SimpleXmlRequest<MediaContainer> request = new SimpleXmlRequest<MediaContainer>(Request.Method.GET, url, MediaContainer.class,
-				new Response.Listener<MediaContainer>() {
-
-					@Override
-					public void onResponse(MediaContainer response) {
-						try {
-							MediaContainer mc = response;
-							populatePosters(mc);
-						} catch (Exception e) {
-							Log.e(getClass().getName(), "Error populating posters.", e);
-						}
-						pd.dismiss();
-					}
-
-					/**
-					 * @param mc
-					 */
-					protected void populatePosters(MediaContainer mc) {
-						MovieMediaContainer movies = new MovieMediaContainer(mc);
-						posterList = movies.createVideos();
-						notifyAdapter.notifyDataSetChanged();						
-						if (!movieContext.isGridViewActive()) {
-							SerenityGallery posterGallery = (SerenityGallery) context
-									.findViewById(R.id.moviePosterGallery);
-							posterGallery.requestFocusFromTouch();
-						} else {
-							TwoWayGridView gridView = (TwoWayGridView) context
-									.findViewById(R.id.movieGridView);
-							gridView.requestFocusFromTouch();
-						}
-					}
-				}, new Response.ErrorListener() {
+		PlexappFactory factory = SerenityApplication.getPlexFactory();
+		String url = factory.getMovieMetadataURL("/library/metadata/"
+				+ mpi.id());
+		SimpleXmlRequest<MediaContainer> xmlRequest = new SimpleXmlRequest<MediaContainer>(
+				Request.Method.GET, url, MediaContainer.class,
+				new GridSubtitleHandler(mpi, context, view),
+				new Response.ErrorListener() {
 
 					@Override
 					public void onErrorResponse(VolleyError error) {
-						if (pd != null) {
-							pd.dismiss();
-						}
+
 					}
 				});
+		queue.add(xmlRequest);
 
-		queue.add(request);	
-	}	
+	}
+
+	@Override
+	protected void fetchDataFromService() {
+		pd = ProgressDialog.show(context, "",
+				context.getString(R.string.retrieving_movies));
+
+		final PlexappFactory factory = SerenityApplication.getPlexFactory();
+		String url = factory.getSectionsURL(key, category);
+
+		SimpleXmlRequest<MediaContainer> request = new SimpleXmlRequest<MediaContainer>(
+				Request.Method.GET, url, MediaContainer.class,
+				new MoviePosterResponseListener(),
+				new MoviePosterResponseErrorListener());
+
+		queue.add(request);
+	}
+
+	private class MoviePosterResponseErrorListener implements
+			Response.ErrorListener {
+
+		@Override
+		public void onErrorResponse(VolleyError error) {
+			if (pd != null) {
+				pd.dismiss();
+			}
+		}
+
+	}
+
+	/**
+	 * @author dcarver
+	 * 
+	 */
+	private class MoviePosterResponseListener implements
+			Response.Listener<MediaContainer> {
+
+		@Override
+		public void onResponse(MediaContainer response) {
+			try {
+				MediaContainer mc = response;
+				populatePosters(mc);
+			} catch (Exception e) {
+				Log.e(getClass().getName(), "Error populating posters.", e);
+			}
+			if (pd.isShowing()) {
+				pd.dismiss();
+			}
+		}
+
+		/**
+		 * @param mc
+		 */
+		protected void populatePosters(MediaContainer mc) {
+			MovieMediaContainer movies = new MovieMediaContainer(mc);
+			posterList = movies.createVideos();
+			notifyAdapter.notifyDataSetChanged();
+			if (!movieContext.isGridViewActive()) {
+				SerenityGallery posterGallery = (SerenityGallery) movieContext
+						.findViewById(R.id.moviePosterGallery);
+				posterGallery.requestFocusFromTouch();
+			} else {
+				TwoWayGridView gridView = (TwoWayGridView) movieContext
+						.findViewById(R.id.movieGridView);
+				gridView.requestFocusFromTouch();
+			}
+		}
+
+	}
+
 }
