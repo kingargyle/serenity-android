@@ -44,6 +44,7 @@ import us.nineworlds.serenity.core.model.impl.MovieMediaContainer;
 import us.nineworlds.serenity.core.services.MovieMetaDataRetrievalIntentService;
 import us.nineworlds.serenity.core.services.YouTubeTrailerSearchIntentService;
 import us.nineworlds.serenity.core.util.DBMetaDataSource;
+import us.nineworlds.serenity.core.util.SimpleXmlRequest;
 import us.nineworlds.serenity.ui.activity.SerenityMultiViewVideoActivity;
 import us.nineworlds.serenity.ui.adapters.AbstractPosterImageGalleryAdapter;
 import us.nineworlds.serenity.ui.listeners.GridSubtitleHandler;
@@ -204,14 +205,13 @@ public class MoviePosterImageAdapter extends AbstractPosterImageGalleryAdapter {
 		final PlexappFactory factory = SerenityApplication.getPlexFactory();
 		String url = factory.getSectionsURL(key, category);
 		
-		StringRequest request = new StringRequest(Request.Method.GET, url,
-				new Response.Listener<String>() {
+		SimpleXmlRequest<MediaContainer> request = new SimpleXmlRequest<MediaContainer>(Request.Method.GET, url, MediaContainer.class,
+				new Response.Listener<MediaContainer>() {
 
 					@Override
-					public void onResponse(String response) {
+					public void onResponse(MediaContainer response) {
 						try {
-							MediaContainer mc;
-							mc = factory.serializeResourceFromString(response);
+							MediaContainer mc = response;
 							populatePosters(mc);
 						} catch (Exception e) {
 							Log.e(getClass().getName(), "Error populating posters.", e);
