@@ -27,6 +27,8 @@ import java.util.List;
 
 import javax.inject.Inject;
 
+import android.support.v7.widget.RecyclerView;
+import net.ganin.darv.DpadAwareRecyclerView;
 import us.nineworlds.plex.rest.PlexappFactory;
 import us.nineworlds.plex.rest.model.impl.MediaContainer;
 import us.nineworlds.serenity.R;
@@ -34,6 +36,8 @@ import us.nineworlds.serenity.core.TrailersYouTubeSearch;
 import us.nineworlds.serenity.core.model.DBMetaData;
 import us.nineworlds.serenity.core.model.VideoContentInfo;
 import us.nineworlds.serenity.core.util.DBMetaDataSource;
+import us.nineworlds.serenity.ui.activity.SerenityMultiViewVideoActivity;
+import us.nineworlds.serenity.ui.activity.SerenityVideoActivity;
 import us.nineworlds.serenity.ui.util.ImageUtils;
 import us.nineworlds.serenity.volley.DefaultLoggingVolleyErrorListener;
 import us.nineworlds.serenity.volley.GridSubtitleVolleyResponseListener;
@@ -58,13 +62,8 @@ import com.jess.ui.TwoWayAbsListView;
 
 /**
  * Implementation of the Poster Image Gallery class for TV Shows.
- *
- * @author dcarver
- *
  */
-public class SeasonsEpisodePosterImageGalleryAdapter
-extends
-us.nineworlds.serenity.ui.browser.tv.episodes.EpisodePosterImageGalleryAdapter {
+public class SeasonsEpisodePosterImageGalleryAdapter extends us.nineworlds.serenity.ui.browser.tv.episodes.EpisodePosterImageGalleryAdapter {
 
 	private static SeasonsEpisodePosterImageGalleryAdapter notifyAdapter;
 	private DBMetaDataSource datasource;
@@ -75,20 +74,20 @@ us.nineworlds.serenity.ui.browser.tv.episodes.EpisodePosterImageGalleryAdapter {
 	@Inject
 	PlexappFactory plexFactory;
 
+	static SerenityVideoActivity context;
+
 	public SeasonsEpisodePosterImageGalleryAdapter(Context c, String key) {
 		super(c, key);
 		notifyAdapter = this;
+		context = (SerenityVideoActivity) c;
 	}
 
 	@Override
-	public View getView(int position, View convertView, ViewGroup parent) {
-		View galleryCellView = context.getLayoutInflater().inflate(
-				R.layout.poster_indicator_view, null);
-
+	public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
+		View galleryCellView = holder.itemView;
 		VideoContentInfo pi = posterList.get(position);
 		gridViewMetaData(galleryCellView, pi);
-		ImageView mpiv = (ImageView) galleryCellView
-				.findViewById(R.id.posterImageView);
+		ImageView mpiv = (ImageView) galleryCellView.findViewById(R.id.posterImageView);
 		mpiv.setBackgroundResource(R.drawable.gallery_item_background);
 		mpiv.setScaleType(ImageView.ScaleType.FIT_XY);
 		int width = ImageUtils.getDPI(270, context);
@@ -134,8 +133,6 @@ us.nineworlds.serenity.ui.browser.tv.episodes.EpisodePosterImageGalleryAdapter {
 				.findViewById(R.id.posterOverlayTitle);
 		title.setText(pi.getTitle());
 		title.setVisibility(View.VISIBLE);
-
-		return galleryCellView;
 	}
 
 	@Override
@@ -143,7 +140,6 @@ us.nineworlds.serenity.ui.browser.tv.episodes.EpisodePosterImageGalleryAdapter {
 		handler = new EpisodeHandler();
 		retrieveEpisodes();
 		notifyAdapter = this;
-
 	}
 
 	protected void gridViewMetaData(View galleryCellView, VideoContentInfo pi) {
@@ -217,7 +213,11 @@ us.nineworlds.serenity.ui.browser.tv.episodes.EpisodePosterImageGalleryAdapter {
 		@Override
 		public void handleMessage(Message msg) {
 			posterList = (List<VideoContentInfo>) msg.obj;
+			DpadAwareRecyclerView recyclerView = (DpadAwareRecyclerView) context.findViewById(R.id.tvShowSeasonImageGallery);
+
 			notifyAdapter.notifyDataSetChanged();
+			recyclerView.requestFocus();
+
 		}
 	}
 }

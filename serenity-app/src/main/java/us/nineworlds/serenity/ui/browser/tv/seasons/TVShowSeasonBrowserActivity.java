@@ -26,10 +26,15 @@ package us.nineworlds.serenity.ui.browser.tv.seasons;
 import java.util.ArrayList;
 import java.util.List;
 
+import android.support.v7.widget.LinearLayoutManager;
+import android.widget.RelativeLayout;
+import butterknife.BindView;
+import butterknife.ButterKnife;
 import net.ganin.darv.DpadAwareRecyclerView;
 import us.nineworlds.serenity.R;
 import us.nineworlds.serenity.core.menus.MenuDrawerItem;
 import us.nineworlds.serenity.core.menus.MenuDrawerItemImpl;
+import us.nineworlds.serenity.recyclerutils.SpaceItemDecoration;
 import us.nineworlds.serenity.ui.activity.SerenityVideoActivity;
 import us.nineworlds.serenity.ui.adapters.AbstractPosterImageGalleryAdapter;
 import us.nineworlds.serenity.ui.adapters.MenuDrawerAdapter;
@@ -50,8 +55,12 @@ import com.jess.ui.TwoWayGridView;
  */
 public class TVShowSeasonBrowserActivity extends SerenityVideoActivity {
 
-	private SerenityGallery tvShowSeasonsGallery;
-	private View tvShowSeasonsMainView;
+	@BindView(R.id.tvShowSeasonImageGallery)
+	DpadAwareRecyclerView tvShowSeasonsGallery;
+
+	@BindView(R.id.tvShowSeasonImageGalleryLayout)
+	View tvShowSeasonsMainView;
+
 	private boolean restarted_state = false;
 	private String key;
 
@@ -65,8 +74,7 @@ public class TVShowSeasonBrowserActivity extends SerenityVideoActivity {
 
 		createSideMenu();
 
-		tvShowSeasonsMainView = findViewById(R.id.tvshowSeasonBrowserLayout);
-		tvShowSeasonsGallery = (SerenityGallery) findViewById(R.id.tvShowSeasonImageGallery);
+		ButterKnife.bind(this);
 
 		DisplayUtils.overscanCompensation(this, getWindow().getDecorView());
 	}
@@ -82,23 +90,15 @@ public class TVShowSeasonBrowserActivity extends SerenityVideoActivity {
 
 	protected void setupSeasons() {
 
-		tvShowSeasonsGallery.setAdapter(new TVShowSeasonImageGalleryAdapter(
-				this, key));
-		tvShowSeasonsGallery
-				.setOnItemSelectedListener(new TVShowSeasonOnItemSelectedListener(
-						tvShowSeasonsMainView, this));
-		tvShowSeasonsGallery
-				.setOnItemClickListener(new TVShowSeasonOnItemClickListener(
-						this));
-		tvShowSeasonsGallery
-				.setOnItemLongClickListener(new SeasonOnItemLongClickListener(
-						this));
-
-		tvShowSeasonsGallery.setPadding(5, 5, 5, 5);
-		tvShowSeasonsGallery.setAnimationDuration(1);
-		tvShowSeasonsGallery.setSpacing(15);
-		tvShowSeasonsGallery.setCallbackDuringFling(false);
-		tvShowSeasonsGallery.setAnimationCacheEnabled(true);
+		LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
+		tvShowSeasonsGallery.setLayoutManager(linearLayoutManager);
+		tvShowSeasonsGallery.setAdapter(new TVShowSeasonImageGalleryAdapter(this, key));
+		tvShowSeasonsGallery.addItemDecoration(new SpaceItemDecoration(getResources().getDimensionPixelSize(R.dimen.horizontal_spacing)));
+		tvShowSeasonsGallery.setOnItemSelectedListener(new TVShowSeasonOnItemSelectedListener(this));
+		tvShowSeasonsGallery.setOnItemClickListener(new TVShowSeasonOnItemClickListener(this));
+//		tvShowSeasonsGallery
+//				.setOnItemLongClickListener(new SeasonOnItemLongClickListener(
+//						this));
 
 	}
 
@@ -197,63 +197,63 @@ public class TVShowSeasonBrowserActivity extends SerenityVideoActivity {
 
 		View focusView = getCurrentFocus();
 
-		SerenityGallery gallery = (SerenityGallery) findViewById(R.id.tvShowSeasonImageGallery);
-		TwoWayGridView gridView = (TwoWayGridView) findViewById(R.id.episodeGridView);
+		DpadAwareRecyclerView gallery = (DpadAwareRecyclerView) findViewById(R.id.tvShowSeasonImageGallery);
+		DpadAwareRecyclerView gridView = (DpadAwareRecyclerView) findViewById(R.id.episodeGridView);
 		if (gridView == null) {
-			gridView = (TwoWayGridView) findViewById(R.id.tvShowGridView);
+			gridView = (DpadAwareRecyclerView) findViewById(R.id.tvShowGridView);
 		}
 
 		if (gallery == null && gridView == null) {
 			return super.onKeyDown(keyCode, event);
 		}
 
-		BaseAdapter adapter = null;
-		if (focusView instanceof TwoWayGridView) {
-			adapter = (BaseAdapter) gridView.getAdapter();
-		} else {
-			adapter = (BaseAdapter) gallery.getAdapter();
-		}
-
-		if (adapter != null) {
-			int itemsCount = adapter.getCount();
-
-			if (contextMenuRequested(keyCode)) {
-				View view = null;
-				if (focusView instanceof TwoWayGridView) {
-					view = gridView.getSelectedView();
-				} else if (gallery != null) {
-					view = gallery.getSelectedView();
-				}
-				if (view == null) {
-					return super.onKeyDown(keyCode, event);
-				}
-				view.performLongClick();
-				return true;
-			}
-
-			if (gallery != null) {
-				if (isKeyCodeSkipBack(keyCode)) {
-					int selectedItem = gallery.getSelectedItemPosition();
-					int newPosition = selectedItem - 10;
-					if (newPosition < 0) {
-						newPosition = 0;
-					}
-					gallery.setSelection(newPosition);
-					gallery.requestFocusFromTouch();
-					return true;
-				}
-				if (isKeyCodeSkipForward(keyCode)) {
-					int selectedItem = gallery.getSelectedItemPosition();
-					int newPosition = selectedItem + 10;
-					if (newPosition > itemsCount) {
-						newPosition = itemsCount - 1;
-					}
-					gallery.setSelection(newPosition);
-					gallery.requestFocusFromTouch();
-					return true;
-				}
-			}
-		}
+//		AbstractPosterImageGalleryAdapter adapter = null;
+//		if (focusView instanceof TwoWayGridView) {
+//			adapter = (BaseAdapter) gridView.getAdapter();
+//		} else {
+//			adapter = (BaseAdapter) gallery.getAdapter();
+//		}
+//
+//		if (adapter != null) {
+//			int itemsCount = adapter.getCount();
+//
+//			if (contextMenuRequested(keyCode)) {
+//				View view = null;
+//				if (focusView instanceof TwoWayGridView) {
+//					view = gridView.getSelectedView();
+//				} else if (gallery != null) {
+//					view = gallery.getSelectedView();
+//				}
+//				if (view == null) {
+//					return super.onKeyDown(keyCode, event);
+//				}
+//				view.performLongClick();
+//				return true;
+//			}
+//
+//			if (gallery != null) {
+//				if (isKeyCodeSkipBack(keyCode)) {
+//					int selectedItem = gallery.getSelectedItemPosition();
+//					int newPosition = selectedItem - 10;
+//					if (newPosition < 0) {
+//						newPosition = 0;
+//					}
+//					gallery.setSelection(newPosition);
+//					gallery.requestFocusFromTouch();
+//					return true;
+//				}
+//				if (isKeyCodeSkipForward(keyCode)) {
+//					int selectedItem = gallery.getSelectedItemPosition();
+//					int newPosition = selectedItem + 10;
+//					if (newPosition > itemsCount) {
+//						newPosition = itemsCount - 1;
+//					}
+//					gallery.setSelection(newPosition);
+//					gallery.requestFocusFromTouch();
+//					return true;
+//				}
+//			}
+//		}
 
 		return super.onKeyDown(keyCode, event);
 

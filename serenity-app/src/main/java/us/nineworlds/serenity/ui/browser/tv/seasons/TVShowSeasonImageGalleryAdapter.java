@@ -28,8 +28,11 @@ import java.util.List;
 
 import javax.inject.Inject;
 
+import android.support.v7.widget.RecyclerView;
+import net.ganin.darv.DpadAwareRecyclerView;
 import us.nineworlds.plex.rest.PlexappFactory;
 import us.nineworlds.plex.rest.model.impl.MediaContainer;
+import us.nineworlds.serenity.InjectingRecyclerViewAdapter;
 import us.nineworlds.serenity.R;
 import us.nineworlds.serenity.core.imageloader.SerenityImageLoader;
 import us.nineworlds.serenity.core.model.SeriesContentInfo;
@@ -61,9 +64,9 @@ import com.android.volley.Response;
  * @author dcarver
  *
  */
-public class TVShowSeasonImageGalleryAdapter extends InjectingBaseAdapter {
+public class TVShowSeasonImageGalleryAdapter extends InjectingRecyclerViewAdapter {
 
-	private List<SeriesContentInfo> seasonList = null;
+	private List<SeriesContentInfo> seasonList = new ArrayList<SeriesContentInfo>();
 	private final SerenityDrawerLayoutActivity context;
 
 	private final String key;
@@ -88,45 +91,26 @@ public class TVShowSeasonImageGalleryAdapter extends InjectingBaseAdapter {
 	}
 
 	protected void fetchData() {
-		context.setSupportProgressBarIndeterminate(true);
-		context.setSupportProgressBarVisibility(false);
-		context.setSupportProgressBarIndeterminateVisibility(true);
-
 		String url = plexFactory.getSeasonsURL(key);
 		volley.volleyXmlGetRequest(url, new SeaonsResponseListener(),
 				new DefaultLoggingVolleyErrorListener());
 	}
 
-	@Override
-	public int getCount() {
 
-		return seasonList.size();
-	}
-
-	@Override
 	public Object getItem(int position) {
-
 		return seasonList.get(position);
 	}
 
 	@Override
-	public long getItemId(int position) {
-		return position;
+	public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+		View galleryCellView = context.getLayoutInflater().inflate(R.layout.poster_tvshow_indicator_view, parent, false);
+
+		return new TVShowsSeasonsViewHolder(galleryCellView);
 	}
 
 	@Override
-	public View getView(int position, View convertView, ViewGroup parent) {
-		View galleryCellView = context.getLayoutInflater().inflate(
-				R.layout.poster_tvshow_indicator_view, null);
-
-		if (position > getCount() - 1) {
-			position = getCount() - 1;
-		}
-
-		if (position < 0) {
-			position = 0;
-		}
-
+	public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
+		View galleryCellView = holder.itemView;
 		SeriesContentInfo pi = seasonList.get(position);
 		ImageView mpiv = (ImageView) galleryCellView
 				.findViewById(R.id.posterImageView);
@@ -140,27 +124,18 @@ public class TVShowSeasonImageGalleryAdapter extends InjectingBaseAdapter {
 		galleryCellView.setLayoutParams(new SerenityGallery.LayoutParams(width,
 				height));
 
-		int unwatched = 0;
-
-		if (pi.getShowsUnwatched() != null) {
-			unwatched = Integer.parseInt(pi.getShowsUnwatched());
-		}
-
 		ImageView watchedView = (ImageView) galleryCellView
 				.findViewById(R.id.posterWatchedIndicator);
 
-		BadgeView badgeView = new BadgeView(context, mpiv);
-		badgeView.setTag("badge");
-		Drawable backgroundDrawable = context.getResources().getDrawable(
-				R.drawable.episode_count_background);
-		badgeView.setBackgroundDrawable(backgroundDrawable);
+		TextView badgeView = (TextView) galleryCellView.findViewById(R.id.badge_count);
+
 		badgeView.setText(pi.getShowsUnwatched());
-		badgeView.show();
+		badgeView.setVisibility(View.VISIBLE);
 
 		if (pi.isWatched()) {
 			watchedView.setImageResource(R.drawable.overlaywatched);
 			watchedView.setVisibility(View.VISIBLE);
-			badgeView.hide();
+			badgeView.setVisibility(View.GONE);
 		}
 
 		int watched = 0;
@@ -173,7 +148,16 @@ public class TVShowSeasonImageGalleryAdapter extends InjectingBaseAdapter {
 					watchedView);
 		}
 
-		return galleryCellView;
+	}
+
+	@Override
+	public long getItemId(int position) {
+		return position;
+	}
+
+	@Override
+	public int getItemCount() {
+		return seasonList.size();
 	}
 
 	protected void toggleProgressIndicator(View galleryCellView, int dividend,
@@ -199,7 +183,6 @@ public class TVShowSeasonImageGalleryAdapter extends InjectingBaseAdapter {
 		public void onResponse(MediaContainer response) {
 			seasonList = new SeasonsMediaContainer(response).createSeries();
 			notifyDataSetChanged();
-			context.setSupportProgressBarIndeterminateVisibility(false);
 
 			if (seasonList != null) {
 				if (!seasonList.isEmpty()) {
@@ -214,11 +197,18 @@ public class TVShowSeasonImageGalleryAdapter extends InjectingBaseAdapter {
 				}
 			}
 
-			SerenityGallery gallery = (SerenityGallery) context
+			DpadAwareRecyclerView gallery = (DpadAwareRecyclerView) context
 					.findViewById(R.id.tvShowSeasonImageGallery);
 			if (gallery != null) {
 				gallery.requestFocusFromTouch();
 			}
+		}
+	}
+
+	public class TVShowsSeasonsViewHolder extends RecyclerView.ViewHolder {
+
+		public TVShowsSeasonsViewHolder(View itemView) {
+			super(itemView);
 		}
 	}
 }
